@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # Development API service
+  api-dev:
+    build:
+      context: .
+      target: development
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - API_TOKEN=dev-api-token-123
+      - JWT_ACCESS_SECRET=development-jwt-access-secret-key-for-testing-only
+      - JWT_REFRESH_SECRET=development-jwt-refresh-secret-key-for-testing-only
+      - JWT_ACCESS_EXPIRY=1h
+      - JWT_REFRESH_EXPIRY=30d
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_REQUESTS=1000
+      - CORS_ORIGIN=*
+      - DB_HOST=postgres-dev
+      - DB_PORT=5432
+      - DB_USERNAME=bugbounty
+      - DB_PASSWORD=dev_password_123
+      - DB_NAME=bug_bounty_dev
+      - REDIS_HOST=redis-dev
+      - REDIS_PORT=6379
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - postgres-dev
+      - redis-dev
+    restart: unless-stopped
+    networks:
+      - bug-bounty-dev-network
+
+  # PostgreSQL database for development
+  postgres-dev:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=bugbounty
+      - POSTGRES_PASSWORD=dev_password_123
+      - POSTGRES_DB=bug_bounty_dev
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - bug-bounty-dev-network
+
+  # Redis for development
+  redis-dev:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - bug-bounty-dev-network
+
+networks:
+  bug-bounty-dev-network:
+    driver: bridge
+
+volumes:
+  postgres-dev-data:
+    driver: local
